@@ -1,0 +1,103 @@
+{
+  "notification_days": {
+    "early": 30,
+    "middle": 14,
+    "urgent": 7,
+    "expired": 0
+  },
+  "messages": {
+    "early": {
+      "subject": "🔔 Early Notification ({days} days remaining)",
+      "body": "Dear {email}, your account will expire in {days} days. Please renew it in advance."
+    },
+    "middle": {
+      "subject": "⚠️ Important Notification ({days} days remaining)",
+      "body": "Dear {email}, your account will expire in {days} days. Don't forget to renew it!"
+    },
+    "urgent": {
+      "subject": "🚨 URGENT Notification ({days} days remaining)",
+      "body": "Urgent notification! Dear {email}, your account will expire in {days} days. Renew it as soon as possible!"
+    },
+    "expired": {
+      "subject": "⏳ ATTENTION: Account Expired!",
+      "body": "⚠️ Attention! {email}, your account has expired!"
+    }
+  },
+  "manual_notification_settings": {
+    "early": {
+      "days": 30,
+      "subject": "🔔 Security Recommendation ({username})",
+      "urgency_level": "Recommendation",
+      "message_type": "warning",
+      "email_content": {
+        "header": "Your account <strong>{username}</strong> will expire in <strong>{expired_days}</strong> days.",
+        "body": "We recommend updating your password in advance.",
+        "footer": "This is an early notification. Please take action soon."
+      }
+    },
+    "middle": {
+      "days": 14,
+      "subject": "⚠️ Important: {username}'s account is expiring",
+      "urgency_level": "Important Notice",
+      "message_type": "important",
+      "email_content": {
+        "header": "Your account <strong>{username}</strong> will expire in <strong>{expired_days}</strong> days!",
+        "body": "We strongly recommend updating your password soon.",
+        "footer": "This is an important notification. Don't ignore it."
+      }
+    },
+    "urgent": {
+      "days": 7,
+      "subject": "🚨 Urgent: {username}'s account expires soon",
+      "urgency_level": "Urgent Notice",
+      "message_type": "urgent",
+      "email_content": {
+        "header": "Your account <strong>{username}</strong> will expire in just <strong>{expired_days}</strong> days!",
+        "body": "Update your password immediately to avoid account suspension.",
+        "footer": "This is an urgent notification. Immediate action required."
+      }
+    },
+    "today": {
+      "days": 0,
+      "subject": "⏳ TODAY: {username}'s account expires",
+      "urgency_level": "Final Day",
+      "message_type": "last_day",
+      "email_content": {
+        "header": "Today is the last day before your account <strong>{username}</strong> expires!",
+        "body": "Update your password immediately to avoid account suspension.",
+        "footer": "This is your final notification. Account will be suspended tomorrow."
+      }
+    },
+    "expired": {
+      "subject": "⚠️ OVERDUE: {username}'s account is inactive",
+      "urgency_level": "Account Expired",
+      "message_type": "expired",
+      "email_content": {
+        "header": "Your account <strong>{username}</strong> expired <strong>{days_overdue}</strong> days ago!",
+        "body": "Update your password to restore access.",
+        "footer": "This account is currently inactive due to expiration."
+      }
+    }
+  },
+  "admin_notifications": {
+    "report_email": {
+      "subject": "Notification Report for {date}",
+      "summary_title": "📌 Summary",
+      "total_notifications": "Total notifications sent:",
+      "unique_users": "Unique users:",
+      "expired_accounts": "Expired accounts:",
+      "urgent_notifications": "Urgent notifications:",
+      "footer_text": "This is an automatically generated report. Please do not reply to this email.",
+      "copyright": "© {year} Your Company. All rights reserved."
+    }
+  },
+  "admin_notification_threshold": 20,
+  "admin_notification_settings": {
+    "email_subject": "Accounts Nearing Expiration",
+    "alert_message": "The following accounts require attention:"
+  },
+  "notification_time": {
+    "automatic_message_all_users": "13:09",
+    "automatic_message_admins": "13:10"
+  }
+}

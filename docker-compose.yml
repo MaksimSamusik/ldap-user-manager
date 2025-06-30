@@ -1,0 +1,17 @@
+services:
+  web:
+    build: .
+    command: gunicorn --bind 0.0.0.0:8000
+           --workers 1
+           --preload
+           LDAPNotify.wsgi:application
+    environment:
+      - TZ=Europe/Moscow
+      - GUNICORN_MASTER_PID=1
+    env_file:
+      - .env
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    restart: unless-stopped

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .warning { color: #d9534f; }
+    </style>
+</head>
+<body>
+    <h2>Notification</h2>
+    <p>Date of checking: {{ notification_date }}</p>
+
+    <h3>{{ alert_message }} ({{ total_users }}):</h3>
+    <table>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Expiry date</th>
+            <th>Days before expiring</th>
+        </tr>
+        {% for user in expiring_users %}
+        <tr class="">
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.expiry_date }}</td>
+            <td>{{ user.days_remaining }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
