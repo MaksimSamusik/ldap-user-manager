@@ -11,10 +11,6 @@ jobs:
       - name: 📥 Checkout репозитория
         uses: actions/checkout@v4
 
-      - name: 🧹 Очистка __pycache__ (перед сборкой)
-        run: |
-          find . -type d -name "__pycache__" -exec rm -rf {} + || true
-
       - name: 🔐 Вход в Docker Hub
         uses: docker/login-action@v3
         with:
@@ -37,10 +33,6 @@ jobs:
       - name: 📥 Checkout репозитория (на self-hosted сервере)
         uses: actions/checkout@v4
 
-      - name: 🧹 Очистка __pycache__ (перед деплоем)
-        run: |
-          find . -type d -name "__pycache__" -exec rm -rf {} + || true
-
       - name: 🚀 Деплой контейнера
         run: |
           echo "📁 Текущая директория:"
@@ -48,7 +40,6 @@ jobs:
 
           echo "📄 Содержимое:"
           ls -la
-
 
           echo "⬇️ Pull Docker образов"
           docker-compose -f docker-compose.yml pull
