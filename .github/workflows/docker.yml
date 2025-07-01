@@ -11,6 +11,10 @@ jobs:
       - name: 📥 Checkout репозитория
         uses: actions/checkout@v4
 
+      - name: 🧹 Очистка __pycache__ (если есть)
+        run: |
+          sudo rm -rf LDAPNotify/__pycache__/ || true
+
       - name: 🔐 Вход в Docker Hub
         uses: docker/login-action@v3
         with:
