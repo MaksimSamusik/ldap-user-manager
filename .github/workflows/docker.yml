@@ -8,16 +8,16 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 📥 Checkout репозитория
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
+      - name: 🔐 Вход в Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: 🛠 Сборка и пуш Docker образа
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -27,21 +27,30 @@ jobs:
             givemebape/ldap-notify:${{ github.sha }}
 
   deploy:
+    needs: build-and-push
     runs-on: self-hosted
     steps:
-      - name: Deploy container
+      - name: 📥 Checkout репозитория (на self-hosted сервере)
+        uses: actions/checkout@v4
+
+      - name: 🚀 Деплой контейнера
         run: |
+          echo "📁 Текущая директория:"
+          pwd
+
+          echo "📄 Содержимое:"
+          ls -la
+
           echo "➡ Перехожу в папку ldap-um"
           cd ldap-um
 
-          echo "➡ Выполняю docker-compose pull"
+          echo "⬇️ Pull Docker образов"
           docker-compose -f docker-compose.yml pull
 
-          echo "➡ Останавливаю старые контейнеры"
+          echo "🛑 Останавливаю старые контейнеры"
           docker-compose -f docker-compose.yml down
 
-          echo "➡ Запускаю новые контейнеры"
+          echo "🆙 Запускаю контейнеры"
           docker-compose -f docker-compose.yml up -d
 
-          echo "✅ Деплой завершен"
-  
+          echo "✅ Деплой завершен успешно"
