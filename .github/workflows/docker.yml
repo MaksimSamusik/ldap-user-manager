@@ -48,6 +48,6 @@ jobs:
           docker-compose -f docker-compose.yml down
 
           echo "🆙 Запускаю контейнеры"
-          docker-compose -f docker-compose.yml up -d
+          docker-compose -f docker-compose up -d --build --no-cache
 
           echo "✅ Деплой завершен успешно"
