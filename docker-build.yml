@@ -2,7 +2,7 @@ name: CI/CD - Build and Push Docker Image
 
 on:
   push:
-    branches: [ main ]  # или другая ветка, например "master"
+    branches: [ master ]
 
 jobs:
   build:
