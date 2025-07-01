@@ -41,8 +41,6 @@ jobs:
           echo "📄 Содержимое:"
           ls -la
 
-          echo "➡ Перехожу в папку ldap-um"
-          cd ldap-um
 
           echo "⬇️ Pull Docker образов"
           docker-compose -f docker-compose.yml pull
