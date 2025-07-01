@@ -1,19 +1,22 @@
+version: '3.8'
+
 services:
   web:
     image: givemebape/ldap-notify:latest
-    command: gunicorn --bind 0.0.0.0:8000
-           --workers 4
-           --preload
-           LDAPNotify.wsgi:application
+    command: >
+      gunicorn --bind 0.0.0.0:8000
+               --workers 4
+               --preload
+               LDAPNotify.wsgi:application
     environment:
       - TZ=Europe/Moscow
       - GUNICORN_MASTER_PID=1
-      - LDAP_SERVER=$LDAP_SERVER
-      - LDAP_PORT=$LDAP_PORT
-      - LDAP_DOMAIN=$LDAP_DOMAIN
-      - AUTH_LDAP_BIND_DN=$AUTH_LDAP_BIND_DN
-      - AUTH_LDAP_BIND_PASSWORD=$AUTH_LDAP_BIND_PASSWORD
-      - AUTH_LDAP_BASE_DN=$AUTH_LDAP_BASE_DN
+      - LDAP_SERVER=${LDAP_SERVER}
+      - LDAP_PORT=${LDAP_PORT}
+      - LDAP_DOMAIN=${LDAP_DOMAIN}
+      - AUTH_LDAP_BIND_DN=${AUTH_LDAP_BIND_DN}
+      - AUTH_LDAP_BIND_PASSWORD=${AUTH_LDAP_BIND_PASSWORD}
+      - AUTH_LDAP_BASE_DN=${AUTH_LDAP_BASE_DN}
     env_file:
       - .env
     volumes:
