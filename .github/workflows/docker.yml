@@ -23,5 +23,21 @@ jobs:
           context: .
           push: true
           tags: |
-            your-dockerhub-username/your-image:latest
-            your-dockerhub-username/your-image:${{ github.sha }}
+            givemebape/ldap-notify:latest
+            givemebape/ldap-notify:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /path/to/your/project
+            docker-compose -f docker-compose.yml pull
+            docker-compose -f docker-compose.yml down
+            docker-compose -f docker-compose.yml up -d
