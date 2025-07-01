@@ -37,6 +37,10 @@ jobs:
       - name: 📥 Checkout репозитория (на self-hosted сервере)
         uses: actions/checkout@v4
 
+      - name: 🧹 Очистка __pycache__ (перед деплоем)
+        run: |
+          find . -type d -name "__pycache__" -exec rm -rf {} + || true
+
       - name: 🚀 Деплой контейнера
         run: |
           echo "📁 Текущая директория:"
