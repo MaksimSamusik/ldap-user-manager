@@ -32,7 +32,17 @@ jobs:
     steps:
       - name: Deploy container
         run: |
+          echo "➡ Перехожу в папку ldap-um"
           cd ldap-um
+
+          echo "➡ Выполняю docker-compose pull"
           docker-compose -f docker-compose.yml pull
+
+          echo "➡ Останавливаю старые контейнеры"
           docker-compose -f docker-compose.yml down
+
+          echo "➡ Запускаю новые контейнеры"
           docker-compose -f docker-compose.yml up -d
+
+          echo "✅ Деплой завершен"
+  
