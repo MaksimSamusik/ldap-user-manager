@@ -33,6 +33,13 @@ jobs:
       - name: Очистка __pycache__ и .pyc файлов (чтобы избежать проблем с правами)
         run: sudo rm -rf ./LDAPNotify/__pycache__ ./expiry_notifier/__pycache__
 
+      - name: Исправить права и удалить кешированные файлы
+        run: |
+          sudo chown -R $(whoami):$(whoami) ./LDAPNotify
+          sudo chown -R $(whoami):$(whoami) ./expiry_notifier
+          sudo find ./LDAPNotify -name "*.pyc" -delete
+          sudo find ./expiry_notifier -name "*.pyc" -delete
+
       - name: 📥 Checkout репозитория (на self-hosted сервере)
         uses: actions/checkout@v4
 
