@@ -33,9 +33,6 @@ jobs:
       - name: 📥 Checkout репозитория (на self-hosted сервере)
         uses: actions/checkout@v4
 
-      - name: Создать .env из секрета
-        run: echo -e "${{ secrets.ENV_FILE_CONTENTS }}" > .env
-
       - name: 🚀 Деплой контейнера
         run: |
           echo "📁 Текущая директория:"
