@@ -22,5 +22,5 @@ services:
     volumes:
       - .:/code
     ports:
-      - "8000:8000"
+      - "80:8000"
     restart: unless-stopped
