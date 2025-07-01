@@ -27,12 +27,12 @@ jobs:
             givemebape/ldap-notify:${{ github.sha }}
 
   deploy:
-      needs: build-and-push
-      runs-on: self-hosted
-      steps:
-        - name: Deploy container
-          run: |
-            cd ldap-um
-            docker-compose -f docker-compose.yml pull
-            docker-compose -f docker-compose.yml down
-            docker-compose -f docker-compose.yml up -d
+    needs: build-and-push
+    runs-on: self-hosted
+    steps:
+      - name: Deploy container
+        run: |
+          cd ldap-um
+          docker-compose -f docker-compose.yml pull
+          docker-compose -f docker-compose.yml down
+          docker-compose -f docker-compose.yml up -d
