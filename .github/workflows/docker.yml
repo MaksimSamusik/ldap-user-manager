@@ -27,16 +27,11 @@ jobs:
             givemebape/ldap-notify:${{ github.sha }}
 
   deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: SSH Deploy
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+      needs: build-and-push
+      runs-on: self-hosted
+      steps:
+        - name: Deploy container
+          run: |
             cd ldap-um
             docker-compose -f docker-compose.yml pull
             docker-compose -f docker-compose.yml down
