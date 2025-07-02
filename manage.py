@@ -2,12 +2,9 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-import time
-from datetime import datetime
 
 
 def main():
-    """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'LDAPNotify.settings')
     try:
         from django.core.management import execute_from_command_line

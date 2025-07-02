@@ -81,7 +81,7 @@ LOGGING = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "verbose",  # Используем форматтер
+            "formatter": "verbose",
         },
         "file": {
             "class": "logging.FileHandler",
@@ -90,19 +90,16 @@ LOGGING = {
         },
     },
     "loggers": {
-        # Логирование для всего проекта
         "": {
             "handlers": ["console", "file"],
             "level": "INFO",
             "propagate": True,
         },
-        # Логирование для django-auth-ldap (более детальное)
         "django_auth_ldap": {
             "level": "DEBUG",
             "handlers": ["console"],
             "propagate": False,
         },
-        # Логирование для вашего приложения
         "expiry_notifier": {
             "level": "DEBUG",
             "handlers": ["console", "file"],
