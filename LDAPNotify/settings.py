@@ -157,6 +157,9 @@ TEMPLATES = [
     },
 ]
 CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [
+    "https://8000-cs-97c11569-caa6-4535-8dbb-78634e625b10.cs-europe-west4-pear.cloudshell.dev",
+]
 WSGI_APPLICATION = 'LDAPNotify.wsgi.application'
 
 # Database
