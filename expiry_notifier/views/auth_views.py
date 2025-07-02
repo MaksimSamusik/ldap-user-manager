@@ -7,8 +7,6 @@ def ldap_login(request):
     error = None
     form_data = None
 
-
-
     if request.method == 'POST':
         form = LDAPLoginForm(request.POST)
         if form.is_valid():
