@@ -112,7 +112,8 @@ LOGGING = {
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.getenv('DEBUG', '0') == '1')
+# DEBUG = bool(os.getenv('DEBUG', '0') == '1')
+DEBUG = True
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 INSTALLED_APPS = [
@@ -155,7 +156,7 @@ TEMPLATES = [
         },
     },
 ]
-
+CORS_ALLOW_CREDENTIALS = True
 WSGI_APPLICATION = 'LDAPNotify.wsgi.application'
 
 # Database
