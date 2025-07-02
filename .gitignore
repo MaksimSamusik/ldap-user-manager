@@ -1,6 +1,10 @@
 # Virtual environment
 .venv/
 
+
+*.sqlite3
+*.db
+
 *.log
 debug.log
 notification.log
@@ -10,3 +14,6 @@ notification.log
 
 __pycache__/
 *.py[cod]
+
+.DS_Store
+Thumbs.db
