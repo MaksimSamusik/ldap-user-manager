@@ -10,7 +10,6 @@ services:
                LDAPNotify.wsgi:application
     environment:
       - TZ=Europe/Moscow
-      - GUNICORN_MASTER_PID=1
       - LDAP_SERVER=${LDAP_SERVER}
       - LDAP_PORT=${LDAP_PORT}
       - LDAP_DOMAIN=${LDAP_DOMAIN}
