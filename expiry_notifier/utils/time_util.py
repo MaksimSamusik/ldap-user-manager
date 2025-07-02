@@ -1,6 +1,10 @@
 from datetime import datetime, timedelta
 
 
+def nt_time_to_datetime(nt_time: int) -> datetime:
+    windows_epoch = datetime(1601, 1, 1)
+    return windows_epoch + timedelta(microseconds=nt_time // 10)
+
 def filetime_to_datetime(filetime):
     if filetime in (0, 9223372036854775807):
         return None

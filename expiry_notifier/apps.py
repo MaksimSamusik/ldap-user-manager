@@ -35,7 +35,6 @@ class ExpiryNotifierConfig(AppConfig):
             self.start_notifier_thread(f)
 
     def start_notifier_thread(self, lock_file):
-        """Запускает поток для проверки времени"""
         def check_time():
             logger.info("Notifier thread started")
             while True:

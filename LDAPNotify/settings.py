@@ -1,12 +1,7 @@
-import logging
 import os
-import ssl
-from datetime import time
 from pathlib import Path
 import ldap
-from django_auth_ldap.config import LDAPSearch, GroupOfUniqueNamesType
-from django_auth_ldap.backend import LDAPBackend
-import dotenv
+from django_auth_ldap.config import LDAPSearch
 from dotenv import load_dotenv
 
 
@@ -128,10 +123,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'expiry_notifier',
+    'corsheaders',
 ]
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -218,3 +215,7 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = 'login'
+
+CORS_ALLOWED_ORIGINS = [
+    "https://8000-cs-97c11569-caa6-4535-8dbb-78634e625b10.cs-europe-west4-pear.cloudshell.dev",
+]

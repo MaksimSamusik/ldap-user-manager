@@ -97,7 +97,7 @@
     "alert_message": "The following accounts require attention:"
   },
   "notification_time": {
-    "automatic_message_all_users": "13:09",
-    "automatic_message_admins": "13:10"
+    "automatic_message_all_users": "13:27",
+    "automatic_message_admins": "13:28"
   }
 }
