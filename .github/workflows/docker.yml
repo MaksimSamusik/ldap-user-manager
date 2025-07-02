@@ -48,6 +48,12 @@ jobs:
           docker-compose -f docker-compose.yml down
 
           echo "🆙 Запускаю контейнеры"
-          docker-compose -f docker-compose.yml up -d
+          docker-compose -f docker-compose.yml up -d\
+          
+          echo "⏳ Жду 10 секунд для инициализации контейнеров"
+          sleep 10
+
+          echo "🔄 Применяю миграции Django"
+          docker-compose -f docker-compose.yml exec web python manage.py migrate
 
           echo "Деплой завершен успешно"
