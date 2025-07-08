@@ -54,44 +54,48 @@ pip install -r requirements.txt
 ## Настройка конфигурации
 Создайте файл .env и укажите нужные данные 
 ### Настройки LDAP
-| Переменная                  | Описание                                                                 | Пример значения               | Код для Django (`settings.py`)                                                                 |
-|-----------------------------|--------------------------------------------------------------------------|-------------------------------|------------------------------------------------------------------------------------------------|
-| `LDAP_SERVER`              | Адрес LDAP-сервера с протоколом                                         | `ldaps://dc1.example.com`     | `AUTH_LDAP_SERVER_URI = os.getenv('LDAP_SERVER')`                                             |
-| `LDAP_PORT`                | Порт для подключения к LDAP                                             | `636`                         | `AUTH_LDAP_PORT = int(os.getenv('LDAP_PORT', 636))`                                          |
-| `LDAP_DOMAIN`              | Домен для формирования логина (user@domain)                             | `example.com`                 | `LDAP_DOMAIN = os.getenv('LDAP_DOMAIN')`                                                     |
-| `AUTH_LDAP_BIND_DN`        | Учетные данные для привязки к LDAP                                      | `EXAMPLE\\Administrator`      | `AUTH_LDAP_BIND_DN = os.getenv('AUTH_LDAP_BIND_DN')`                                         |
-| `AUTH_LDAP_BIND_PASSWORD`  | Пароль для привязки к LDAP                                              | `P@ssw0rd123!`                | `AUTH_LDAP_BIND_PASSWORD = os.getenv('AUTH_LDAP_BIND_PASSWORD')`                              |
-| `AUTH_LDAP_BASE_DN`        | Базовый DN для поиска пользователей                                     | `DC=example,DC=com`           | `AUTH_LDAP_BASE_DN = os.getenv('AUTH_LDAP_BASE_DN')`                                         |
-| `AUTH_LDAP_GROUP_TYPE`     | Тип групп LDAP (ActiveDirectory)                                        | `ActiveDirectoryGroupType()`  | `from django_auth_ldap.config import ActiveDirectoryGroupType`<br>`AUTH_LDAP_GROUP_TYPE = ActiveDirectoryGroupType()` |
-| `AUTH_LDAP_ALWAYS_UPDATE_USER` | Обновлять данные пользователя при каждом входе                      | `True`                        | `AUTH_LDAP_ALWAYS_UPDATE_USER = True`                                                        |
-| `AUTH_LDAP_FIND_GROUP_PERMS` | Искать разрешения в группах LDAP                                     | `True`                        | `AUTH_LDAP_FIND_GROUP_PERMS = True`                                                          |
+| Переменная                  | Описание                                                                 | Пример значения               |
+|-----------------------------|--------------------------------------------------------------------------|-------------------------------|
+| `LDAP_SERVER`              | Адрес LDAP-сервера с протоколом                                         | `ldaps://dc1.example.com`     |
+| `LDAP_PORT`                | Порт для подключения к LDAP                                             | `636`                         |
+| `LDAP_DOMAIN`              | Домен для формирования логина (user@domain)                             | `example.com`                 |
+| `AUTH_LDAP_BIND_DN`        | Учетные данные для привязки к LDAP                                      | `EXAMPLE\\Administrator`      |
+| `AUTH_LDAP_BIND_PASSWORD`  | Пароль для привязки к LDAP                                              | `P@ssw0rd123!`                |
+| `AUTH_LDAP_BASE_DN`        | Базовый DN для поиска пользователей                                     | `DC=example,DC=com`           |
+| `AUTH_LDAP_GROUP_TYPE`     | Тип групп LDAP (ActiveDirectory)                                        | `ActiveDirectoryGroupType()`  |
+| `AUTH_LDAP_ALWAYS_UPDATE_USER` | Обновлять данные пользователя при каждом входе                      | `True`                        |
+| `AUTH_LDAP_FIND_GROUP_PERMS` | Искать разрешения в группах LDAP                                     | `True`                        |
 
 ### Настройки Django
-| Переменная          | Описание                                     | Пример значения                          | Код для Django (`settings.py`)               |
-|---------------------|----------------------------------------------|------------------------------------------|---------------------------------------------|
-| `SECRET_KEY`       | Секретный ключ для подписи данных           | `django-insecure-m^^s@e+%_ikct-&c-...`  | `SECRET_KEY = os.getenv('SECRET_KEY')`      |
-| `DEBUG`           | Режим отладки (1 - вкл, 0 - выкл)          | `0`                                      | `DEBUG = bool(int(os.getenv('DEBUG', 0)))`  |
-| `ALLOWED_HOSTS`   | Разрешенные хосты (через запятую)           | `localhost,127.0.0.1`                   | `ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')` |
+| Переменная          | Описание                          | Пример значения            |
+|---------------------|-----------------------------------|----------------------------|
+| `SECRET_KEY`       | Секретный ключ для подписи данных | `django-insecure-m^^s@e+%_ikct-&c-...` |
+| `DEBUG`           | Режим отладки (1 - вкл, 0 - выкл) | `0`                        |
+| `ALLOWED_HOSTS`   | Разрешенные хосты (через запятую) | `localhost,127.0.0.1`      |
+| `CSRF_TRUSTED_ORIGINS`   | Доверенные домены для CSRF        | `localhost`                 |
 
 ### Настройки SMTP
-| Переменная            | Описание                          | Пример значения     | Код для Django (`settings.py`)                     |
-|-----------------------|-----------------------------------|---------------------|--------------------------------------------------|
-| `EMAIL_HOST`         | SMTP-сервер                      | `smtp.yandex.ru`    | `EMAIL_HOST = os.getenv('EMAIL_HOST')`          |
-| `EMAIL_PORT`         | Порт SMTP                        | `587`               | `EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))`|
-| `EMAIL_USE_TLS`      | Использовать TLS                 | `True`              | `EMAIL_USE_TLS = bool(int(os.getenv('EMAIL_USE_TLS', 1)))` |
-| `EMAIL_HOST_USER`    | Логин для SMTP                   | `example@yandex.ru` | `EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')`|
-| `EMAIL_HOST_PASSWORD`| Пароль для SMTP                  | `password`          | `EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')` |
+| Переменная            | Описание                          | Пример значения     |
+|-----------------------|-----------------------------------|---------------------|
+| `EMAIL_HOST`         | SMTP-сервер                      | `smtp.yandex.ru`    |
+| `EMAIL_PORT`         | Порт SMTP                        | `587`               |
+| `EMAIL_USE_TLS`      | Использовать TLS                 | `True`              |
+| `EMAIL_HOST_USER`    | Логин для SMTP                   | `example@yandex.ru` |
+| `EMAIL_HOST_PASSWORD`| Пароль для SMTP                  | `password`          |
 
 ### Конфигурация уведомлений (config.json)
-| Переменная                  | Описание                                                                                     |
-|-----------------------------|----------------------------------------------------------------------------------------------|
-| `notification_days`             | Промежутки проверки пользователей для фоновой отправки уведомления                           |
-| `messages`                | Содержимое сообщения для фоновой отправки                                                    |
-| `manual_notification_settings`              | Содержимое сообщения отправленного через веб-интерфейс                                       |
-| `admin_notifications`        | Содержимое отчета для администраторов                                                        |
-| `admin_notification_threshold`        | Фильтрация пользователей для отправки отчета админам (количество дней до истечения аккаунта) |
-| `admin_notification_settings`        | Содержимое письма для администраторов                                                        |
-| `admin_notification_threshold`        | Время нотификации                                                                            |
+| Переменная                     | Описание                                                                                     |
+|--------------------------------|----------------------------------------------------------------------------------------------|
+| `notification_days`            | Промежутки проверки пользователей для фоновой отправки уведомления                           |
+| `messages`                     | Содержимое сообщения для фоновой отправки                                                    |
+| `manual_notification_settings` | Содержимое сообщения отправленного через веб-интерфейс                                       |
+| `admin_auto_report`            | Содержимое отчета для администраторов                                                        |
+                                       
+### Настройки Celery
+| Переменная          | Описание                                | Пример значения            |
+|---------------------|-----------------------------------------|----------------------------|
+| `CELERY_BROKER_URL`       | Url брокера-сообщений                   | `redis://redis:6379/0` |
+| `CELERY_RESULT_BACKEND`           | Хранилище результатов выполнения задач. | `redis://redis:6379/0`|
 
 ## Развертывание
 

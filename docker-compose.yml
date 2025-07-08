@@ -9,13 +9,13 @@ services:
                --preload
                ldap_notify.wsgi:application
     environment:
-      - TZ=Europe/Moscow
-      - LDAP_SERVER=${LDAP_SERVER}
-      - LDAP_PORT=${LDAP_PORT}
-      - LDAP_DOMAIN=${LDAP_DOMAIN}
-      - AUTH_LDAP_BIND_DN=${AUTH_LDAP_BIND_DN}
-      - AUTH_LDAP_BIND_PASSWORD=${AUTH_LDAP_BIND_PASSWORD}
-      - AUTH_LDAP_BASE_DN=${AUTH_LDAP_BASE_DN}
+      - TZ=Europe/Moscow  # Устанавливает часовой пояс контейнера
+      - LDAP_SERVER=${LDAP_SERVER}  # Адрес LDAP-сервера (например, ldaps://dc1.example.com)
+      - LDAP_PORT=${LDAP_PORT}  # Порт LDAP-сервера (например, 636)
+      - LDAP_DOMAIN=${LDAP_DOMAIN}  # Домен LDAP (например, example.com)
+      - AUTH_LDAP_BIND_DN=${AUTH_LDAP_BIND_DN}  # DN учётной записи для подключения к LDAP (например, EXAMPLE\Administrator)
+      - AUTH_LDAP_BIND_PASSWORD=${AUTH_LDAP_BIND_PASSWORD}  # Пароль учётной записи для подключения к LDAP
+      - AUTH_LDAP_BASE_DN=${AUTH_LDAP_BASE_DN}  # Базовый DN, откуда начинается поиск пользователей (например, DC=example,DC=com)
     env_file:
       - .env
     ports:
@@ -36,8 +36,8 @@ services:
     image: givemebape/ldap-notify:latest
     command: celery -A ldap_notify worker -l info
     environment:
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
-      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}  # URL брокера задач (например, redis://redis:6379/0)
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}  # Хранилище результатов задач (например, redis://redis:6379/0)
     env_file:
       - .env
     depends_on:
@@ -47,7 +47,7 @@ services:
 
   celery-beat:
     image: givemebape/ldap-notify:latest
-    command: celery -A ldap_notify beat -l info
+    command: celery -A ldap_notify beat -l info  # Планировщик периодических задач
     depends_on:
       - redis
       - web

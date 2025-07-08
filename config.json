@@ -112,9 +112,5 @@
       "body": "Please take appropriate action for these users.",
       "footer": "This is an automatically generated report sent on <strong>{date}</strong>. Do not reply to this email."
     }
-  },
-
-  "notification_time": {
-    "automatic_message_all_users": "19:52"
   }
 }
