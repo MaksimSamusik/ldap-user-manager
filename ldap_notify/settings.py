@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import ldap
+from celery.schedules import crontab
 from django_auth_ldap.config import LDAPSearch
 from dotenv import load_dotenv
 
@@ -135,7 +136,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'LDAPNotify.urls'
+ROOT_URLCONF = 'ldap_notify.urls'
 
 TEMPLATES = [
     {
@@ -156,7 +157,7 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://8000-cs-97c11569-caa6-4535-8dbb-78634e625b10.cs-europe-west4-pear.cloudshell.dev",
 ]
-WSGI_APPLICATION = 'LDAPNotify.wsgi.application'
+WSGI_APPLICATION = 'ldap_notify.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -219,3 +220,23 @@ LOGIN_URL = 'login'
 CORS_ALLOWED_ORIGINS = [
     "https://8000-cs-97c11569-caa6-4535-8dbb-78634e625b10.cs-europe-west4-pear.cloudshell.dev",
 ]
+
+
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Дополнительно можно указать часовой пояс и другие параметры
+CELERY_TIMEZONE = 'Europe/Moscow'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 минут
+
+CELERY_BEAT_SCHEDULE = {
+    'send-daily-notification': {
+        'task': 'expiry_notifier.tasks.send_daily_notification',
+        'schedule': crontab(hour=17, minute=33),
+    },
+}

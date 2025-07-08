@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, timezone
 from django.http import JsonResponse
 from expiry_notifier.ldap.ldap_connector import get_ldap_connection
@@ -16,7 +17,7 @@ def ldap_users() -> JsonResponse | None:
             '(&'
             '(objectClass=user)'
             '(!(userAccountControl:1.2.840.113556.1.4.803:=2))'
-            '(!(memberOf=CN=Domain Admins,CN=Users,DC=example,DC=com))'
+            f'(!(memberOf=CN=Domain Admins,CN=Users,{os.getenv("AUTH_LDAP_BASE_DN")}))'
             ')'
         )
 
@@ -24,7 +25,7 @@ def ldap_users() -> JsonResponse | None:
             '(&'
             '(objectCategory=person)'
             '(objectClass=user)'
-            '(memberOf=CN=Domain Admins,CN=Users,DC=example,DC=com)'
+            f'(memberOf=CN=Domain Admins,CN=Users,{os.getenv("AUTH_LDAP_BASE_DN")})'
             ')'
         )
 

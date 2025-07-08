@@ -7,7 +7,7 @@ services:
       gunicorn --bind 0.0.0.0:8000
                --workers 4
                --preload
-               LDAPNotify.wsgi:application
+               ldap_notify.wsgi:application
     environment:
       - TZ=Europe/Moscow
       - LDAP_SERVER=${LDAP_SERVER}
@@ -20,4 +20,35 @@ services:
       - .env
     ports:
       - "8000:8000"
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    container_name: redis_container
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redisdata:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+  celery:
+    image: givemebape/ldap-notify:latest
+    command: celery -A ldap_notify worker -l info
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - web
+    restart: unless-stopped
+
+  celery-beat:
+    image: givemebape/ldap-notify:latest
+    command: celery -A ldap_notify beat -l info
+    depends_on:
+      - redis
+      - web
     restart: unless-stopped

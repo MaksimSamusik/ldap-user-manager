@@ -7,20 +7,44 @@
   },
   "messages": {
     "early": {
-      "subject": "🔔 Early Notification ({days} days remaining)",
-      "body": "Dear {email}, your account will expire in {days} days. Please renew it in advance."
+      "subject": "🔔 Security Recommendation ({username})",
+      "urgency_level": "Recommendation",
+      "message_type": "warning",
+      "email_content": {
+        "header": "Your account <strong>{username}</strong> will expire in <strong>{expired_days}</strong> days.",
+        "body": "We recommend updating your password in advance.",
+        "footer": "This is an early notification. Please take action soon."
+      }
     },
     "middle": {
-      "subject": "⚠️ Important Notification ({days} days remaining)",
-      "body": "Dear {email}, your account will expire in {days} days. Don't forget to renew it!"
+      "subject": "⚠️ Important: {username}'s account is expiring",
+      "urgency_level": "Important Notice",
+      "message_type": "important",
+      "email_content": {
+        "header": "Your account <strong>{username}</strong> will expire in <strong>{expired_days}</strong> days!",
+        "body": "We strongly recommend updating your password soon.",
+        "footer": "This is an important notification. Don't ignore it."
+      }
     },
     "urgent": {
-      "subject": "🚨 URGENT Notification ({days} days remaining)",
-      "body": "Urgent notification! Dear {email}, your account will expire in {days} days. Renew it as soon as possible!"
+      "subject": "🚨 Urgent: {username}'s account expires soon",
+      "urgency_level": "Urgent Notice",
+      "message_type": "urgent",
+      "email_content": {
+        "header": "Your account <strong>{username}</strong> will expire in just <strong>{expired_days}</strong> days!",
+        "body": "Update your password immediately to avoid account suspension.",
+        "footer": "This is an urgent notification. Immediate action required."
+      }
     },
     "expired": {
-      "subject": "⏳ ATTENTION: Account Expired!",
-      "body": "⚠️ Attention! {email}, your account has expired!"
+      "subject": "⏳ EXPIRED: {username}'s account has expired",
+      "urgency_level": "Account Expired",
+      "message_type": "expired",
+      "email_content": {
+        "header": "Your account <strong>{username}</strong> has expired.",
+        "body": "You can no longer access the system until your password is reset. Please contact your administrator or follow the recovery process.",
+        "footer": "This is an automatic message regarding account expiration. Immediate action is required to restore access."
+      }
     }
   },
   "manual_notification_settings": {
@@ -79,25 +103,18 @@
       }
     }
   },
-  "admin_notifications": {
-    "report_email": {
-      "subject": "Notification Report for {date}",
-      "summary_title": "📌 Summary",
-      "total_notifications": "Total notifications sent:",
-      "unique_users": "Unique users:",
-      "expired_accounts": "Expired accounts:",
-      "urgent_notifications": "Urgent notifications:",
-      "footer_text": "This is an automatically generated report. Please do not reply to this email.",
-      "copyright": "© {year} Your Company. All rights reserved."
+  "admin_auto_report": {
+    "subject": "📋 Expired Accounts Report – {date}",
+    "urgency_level": "Report",
+    "message_type": "report",
+    "email_content": {
+      "header": "The following accounts will expire soon (total: <strong>{total_users}</strong>):",
+      "body": "Please take appropriate action for these users.",
+      "footer": "This is an automatically generated report sent on <strong>{date}</strong>. Do not reply to this email."
     }
   },
-  "admin_notification_threshold": 20,
-  "admin_notification_settings": {
-    "email_subject": "Accounts Nearing Expiration",
-    "alert_message": "The following accounts require attention:"
-  },
+
   "notification_time": {
-    "automatic_message_all_users": "13:28",
-    "automatic_message_admins": "13:29"
+    "automatic_message_all_users": "19:52"
   }
 }

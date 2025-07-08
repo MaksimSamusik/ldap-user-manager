@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.views.decorators.http import require_POST
 from django.shortcuts import redirect
-from LDAPNotify import settings
+from ldap_notify import settings
 from ..services.user_service import get_users
 import json
 from django.conf import settings
@@ -77,7 +77,7 @@ def send_email_view(request, email):
             'email_content': formatted_content
         })
 
-        html_message = render_to_string('emails/notification.html', context)
+        html_message = render_to_string('emails/manual_user_notification.html', context)
         text_message = strip_tags(html_message)
 
         email_msg = EmailMultiAlternatives(

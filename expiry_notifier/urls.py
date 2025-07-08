@@ -1,6 +1,6 @@
 from django.urls import path
 from expiry_notifier.views import main_views, email_views, auth_views
-from .services import notification_service
+
 urlpatterns = [
     path('', main_views.main_page, name='main_page'),
     path('login/', auth_views.ldap_login, name='login'),

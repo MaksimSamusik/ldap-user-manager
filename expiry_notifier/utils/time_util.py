@@ -21,4 +21,4 @@ def format_iso_time(iso_time: str) -> str:
         dt = datetime.fromisoformat(iso_time.replace('Z', '+00:00'))
         return dt.strftime('%d.%m.%Y %H:%M')
     except (ValueError, AttributeError):
-        return "Некорректный формат времени"
+        return "Incorrect time format"

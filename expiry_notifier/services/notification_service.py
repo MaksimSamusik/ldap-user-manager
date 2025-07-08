@@ -1,273 +1,269 @@
 import json
 import logging
-import smtplib
-import traceback
-from datetime import datetime
-from typing import List, Dict, Any, Optional, Tuple
-from django.core import mail
-from django.core.mail import EmailMultiAlternatives, EmailMessage
+import os
+from datetime import datetime, timezone
+from dateutil.parser import isoparse
+from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from ldap import MOD_REPLACE, MOD_ADD
+from expiry_notifier.ldap.ldap_connector import get_ldap_connection
+from expiry_notifier.services.user_service import get_users
+from expiry_notifier.utils.format_utils import format_string
+from ldap_notify.settings import DEFAULT_FROM_EMAIL
+from expiry_notifier.services.user_service import get_admin_users
 from django.utils.html import strip_tags
-from LDAPNotify import settings
-from expiry_notifier.services.user_service import get_users, get_admin_users
-from expiry_notifier.utils.time_util import format_iso_time
-from dotenv import load_dotenv
-
-load_dotenv()
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
-notification_sent: Dict[str, List[int]] = {}
+with open("config.json", encoding="utf-8") as f:
+    config = json.load(f)
+
+NOTIFICATION_DAYS = config["notification_days"]
+MESSAGES = config["messages"]
+
+STAGES = [
+    (NOTIFICATION_DAYS["early"], NOTIFICATION_DAYS["middle"], "early"),
+    (NOTIFICATION_DAYS["middle"], NOTIFICATION_DAYS["urgent"], "middle"),
+    (NOTIFICATION_DAYS["urgent"], NOTIFICATION_DAYS["expired"], "urgent"),
+    (NOTIFICATION_DAYS["expired"], float("-inf"), "expired")
+]
 
 
-class NotificationManager:
-    def __init__(self):
-        self.now = datetime.now()
-        self.config = self._load_config()
-        self.days_config = self.config["notification_days"]
-        self.messages_config = self.config["messages"]
-        self.admin_config = self.config.get('admin_notifications', {}).get('report_email', {})
+def process_expiry() -> list:
+    users = get_users()
+    if not users:
+        logger.warning("No users found from LDAP.")
+        return []
 
-    @staticmethod
-    def _load_config() -> Dict[str, Any]:
+    conn = get_ldap_connection()
+    now = datetime.now(timezone.utc)
+    notify_list = []
+
+    logger.info(f"Processing {len(users)} users...")
+
+    for user in users:
+        expires_raw = user.get("account_expires_raw")
+        username = user.get("username")
+        email = user.get("email")
+        first_name = user.get("first_name")
+        last_name = user.get("last_name")
+        user_dn = f"CN={first_name} {last_name},CN=Users,{os.getenv("AUTH_LDAP_BASE_DN")}"
+
+        if not user_dn or not email or not expires_raw:
+            logger.warning(f"[SKIP] Missing data for user {username}")
+            continue
+
         try:
-            with open('config.json', 'r', encoding='utf-8') as file:
-                return json.load(file)
+            if isinstance(expires_raw, str):
+                expires = isoparse(expires_raw)
+            elif isinstance(expires_raw, datetime):
+                expires = expires_raw
+            elif isinstance(expires_raw, (int, float)):
+                seconds = expires_raw / 10_000_000 - 11644473600
+                expires = datetime.fromtimestamp(seconds, tz=timezone.utc)
+            else:
+                logger.warning(f"Unsupported expiry format for {username}: {expires_raw}")
+                continue
         except Exception as e:
-            logger.critical(f"Failed to load config file: {str(e)}")
-            raise
+            logger.warning(f"Could not parse expiry for {username}: {e}")
+            continue
 
-    def send_notifications(self) -> List[Tuple[str, int]]:
-        users = get_users()
-        admin_users = get_admin_users()
-        admin_emails = [admin['email'] for admin in admin_users if 'email' in admin]
+        days_left = (expires - now).days
 
-        logger.info(f"Starting notification processing. Total users: {len(users)}")
-        logger.info(f"Found admin emails for reporting: {len(admin_emails)}")
+        template_context = {
+            "email": email,
+            "username": username,
+            "first_name": first_name,
+            "last_name": last_name,
+            "days": days_left,
+            "expired_days": days_left,
+            "days_overdue": abs(days_left),
+            "year": now.year,
+            "date": now.date().isoformat()
+        }
 
-        emails_to_send = []
-        notification_report = []
+        try:
+            conn.search(user_dn, "(objectClass=*)", attributes=["info"])
+            entry = conn.entries[0] if conn.entries else None
+            info = str(entry.info.value) if entry and hasattr(entry, "info") and entry.info.value else ""
+        except Exception as e:
+            logger.warning(f"Could not read 'info' for {username}: {e}")
+            info = ""
 
-        for user in users:
+        if info and days_left > NOTIFICATION_DAYS["early"]:
             try:
-                email = user.get('email')
-                if not email:
-                    continue
-
-                processed_user = self._process_user(user)
-                if processed_user:
-                    emails_to_send.append(processed_user[0])
-                    notification_report.append(processed_user[1])
+                conn.modify(user_dn, {"info": [(MOD_REPLACE, [""])]})
+                logger.info(f"[RESET] Cleared 'info' for {username} due to password reset")
             except Exception as e:
-                logger.error(f"Error processing user {email}: {str(e)}", exc_info=True)
+                logger.error(f"Failed to clear 'info' for {username}: {e}")
+            continue
 
-        if emails_to_send:
-            self._send_mass_messages(emails_to_send)
+        for start, end, stage in STAGES:
+            tag = f"notified_{stage}"
+            if start >= days_left > end and tag not in info:
+                message_cfg = MESSAGES.get(stage, {})
+                subject = format_string(message_cfg.get("subject", ""), template_context)
+                email_content = message_cfg.get("email_content", {})
 
-        if notification_report and admin_emails:
-            self._send_admin_report(notification_report, admin_emails)
-        else:
-            logger.warning("No admins available for report sending")
+                header = format_string(email_content.get("header", ""), template_context)
+                body = format_string(email_content.get("body", ""), template_context)
+                footer = format_string(email_content.get("footer", ""), template_context)
 
-        logger.info(f"Processing complete. Notifications sent for {len(notification_report)} users")
-        return [(item['email'], item['expiry_days']) for item in notification_report]
+                full_user_data = {
+                    **user,
+                    "days_left": days_left,
+                    "stage": stage,
+                    "subject": subject,
+                    "header": header,
+                    "body": body,
+                    "footer": footer,
+                    "expiry_date": expires.strftime('%d.%m.%Y'),
+                    "sent_at": now.strftime('%d.%m.%Y %H:%M'),
+                }
+                notify_list.append(full_user_data)
 
-    def _process_user(self, user: Dict[str, Any]) -> Optional[Tuple[Dict[str, Any], Dict[str, Any]]]:
-        email = user['email']
-        user['account_expires_raw'] = format_iso_time(user['account_expires_raw'])
-
-        try:
-            expiry_date = datetime.strptime(user['account_expires_raw'], '%d.%m.%Y %H:%M')
-        except ValueError:
-            logger.error(f"Invalid date format for user {email}")
-            return None
-
-        expiry_days = (expiry_date - self.now).days
-        notification_type = self._determine_notification_type(email, expiry_days)
-
-        if not notification_type:
-            return None
-
-        message_template = self.messages_config[notification_type]
-        subject = message_template["subject"].format(days=expiry_days)
-        body = message_template["body"].format(email=email, days=expiry_days)
-
-        logger.info(self._create_log_message(email, expiry_days, notification_type))
-
-        if email not in notification_sent:
-            notification_sent[email] = []
-        notification_sent[email].append(self.days_config.get(notification_type, 0))
-
-        email_data = {
-            'email': email,
-            'subject': subject,
-            'body': body,
-            'user': user,
-            'notification_type': notification_type
-        }
-
-        report_data = {
-            'username': user.get('username', 'N/A'),
-            'email': email,
-            'expiry_days': expiry_days,
-            'notification_type': notification_type,
-            'sent_at': self.now.strftime('%Y-%m-%d %H:%M'),
-            'account_status': 'Active' if expiry_days > 0 else 'Expired'
-        }
-
-        return email_data, report_data
-
-    def _determine_notification_type(self, email: str, expiry_days: int) -> Optional[str]:
-        if self.days_config["early"] > expiry_days >= self.days_config["middle"] and \
-                self.days_config["early"] not in notification_sent.get(email, []):
-            return "early"
-        elif self.days_config["urgent"] < expiry_days <= self.days_config["middle"] and \
-                self.days_config["middle"] not in notification_sent.get(email, []):
-            return "middle"
-        elif 0 < expiry_days <= self.days_config["urgent"] and \
-                self.days_config["urgent"] not in notification_sent.get(email, []):
-            return "urgent"
-        elif expiry_days <= self.days_config["expired"]:
-            return "expired"
-        return None
-
-    def _create_log_message(self, email: str, expiry_days: int, notification_type: str) -> str:
-        messages = {
-            "early": f"User {email} (expires in {expiry_days} days): Early notification (30 days)",
-            "middle": f"User {email} (expires in {expiry_days} days): Middle notification (14 days)",
-            "urgent": f"User {email} (expires in {expiry_days} days): Urgent notification (7 days)",
-            "expired": f"User {email} (expires in {expiry_days} days): Account expired!"
-        }
-        return messages.get(notification_type, "")
-
-    def _send_admin_report(self, report_data: List[Dict[str, Any]], admin_emails: List[str]) -> None:
-        if not admin_emails:
-            logger.warning("No admin emails available for report")
-            return
-
-        context = self._prepare_report_context(report_data)
-
-        try:
-            html_content = render_to_string('emails/admin_report.html', context)
-            email_subject = self.admin_config.get('subject', 'Notification report for {date}').format(
-                date=self.now.strftime('%d.%m.%Y')
-            )
-
-            email = EmailMessage(
-                subject=email_subject,
-                body=html_content,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=admin_emails,
-            )
-            email.content_subtype = "html"
-            email.send()
-
-            logger.info(f"HTML report successfully sent to {len(admin_emails)} admins")
-        except Exception as e:
-            logger.error(f"Error sending HTML report: {str(e)}", exc_info=True)
-
-    def _prepare_report_context(self, report_data: List[Dict[str, Any]]) -> Dict[str, Any]:
-        return {
-            'report_title': "📊 Notification Report",
-            'report_date': self.now.strftime('%Y-%m-%d %H:%M'),
-            'summary_title': self.admin_config.get('summary_title', '📌 Summary'),
-            'total_notifications': len(report_data),
-            'total_notifications_text': self.admin_config.get('total_notifications', 'Total notifications sent:'),
-            'unique_users': len({r['email'] for r in report_data}),
-            'unique_users_text': self.admin_config.get('unique_users', 'Unique users:'),
-            'expired_count': len([r for r in report_data if r['notification_type'] == 'expired']),
-            'expired_text': self.admin_config.get('expired_accounts', 'Expired accounts:'),
-            'urgent_count': len([r for r in report_data if r['notification_type'] == 'urgent']),
-            'urgent_text': self.admin_config.get('urgent_notifications', 'Urgent notifications:'),
-            'current_year': self.now.year,
-            'footer_text': self.admin_config.get('footer_text', 'This is an automatically generated report.'),
-            'copyright_text': self.admin_config.get('copyright', '© {year} Your Company.').format(year=self.now.year),
-            'report_items': self._prepare_report_items(report_data)
-        }
-
-    def _prepare_report_items(self, report_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        return [{
-            'username': item['username'],
-            'email': item['email'],
-            'formatted_days': self._format_days(item['expiry_days']),
-            'formatted_type': self._format_notification_type(item['notification_type']),
-            'account_status': item['account_status'],
-            'sent_at': item['sent_at'],
-            'row_class': self._get_row_class(item['notification_type'])
-        } for item in sorted(report_data, key=lambda x: (x['notification_type'], x['expiry_days']))]
-
-    @staticmethod
-    def _send_mass_messages(messages_data: List[Dict[str, Any]]) -> None:
-        connection = None
-        try:
-            connection = mail.get_connection()
-            connection.open()
-
-            email_messages = []
-            for data in messages_data:
+                updated_info = f"{info};{tag}" if info else tag
+                mod_action = MOD_REPLACE if info else MOD_ADD
                 try:
-                    context = {
-                        'user': data['user'],
-                        'message': data['body'],
-                        'subject': data['subject']
-                    }
-
-                    html_message = render_to_string('emails/auto_notification.html', context)
-                    text_message = strip_tags(html_message)
-
-                    email = EmailMultiAlternatives(
-                        subject=data['subject'],
-                        body=text_message,
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[data['email']],
-                        connection=connection
-                    )
-                    email.attach_alternative(html_message, "text/html")
-                    email_messages.append(email)
-
-                    logger.debug(f"Prepared email: {data['subject']} for {data['email']}")
+                    conn.modify(user_dn, {"info": [(mod_action, [updated_info])]})
+                    logger.info(f"[INFO] {username} marked as '{tag}' in LDAP")
                 except Exception as e:
-                    logger.error(f"Error preparing email for {data['email']}: {str(e)}")
-                    continue
+                    logger.error(f"Failed to update 'info' for {username}: {e}")
+                break
 
-            if email_messages:
-                connection.send_messages(email_messages)
-                logger.info(f"Successfully sent {len(email_messages)} emails")
-
-        except smtplib.SMTPException as e:
-            logger.error(f"SMTP error during bulk sending: {str(e)}")
-        except Exception as e:
-            logger.error(f"Critical error during bulk sending: {traceback.format_exc()}")
-        finally:
-            if connection:
-                connection.close()
-
-    @staticmethod
-    def _get_row_class(notification_type: str) -> str:
-        return {
-            'expired': 'expired',
-            'urgent': 'urgent'
-        }.get(notification_type, '')
-
-    @staticmethod
-    def _format_days(days: int) -> str:
-        return f"{abs(days)} days ago" if days < 0 else str(days)
-
-    @staticmethod
-    def _format_notification_type(ntype: str) -> str:
-        types = {
-            'early': '🟢 Early',
-            'middle': '🟡 Middle',
-            'urgent': '🔴 Urgent',
-            'expired': '⏳ Expired',
-        }
-        return types.get(ntype, ntype)
+    conn.unbind()
+    logger.info(f"Finished processing. {len(notify_list)} notifications prepared.")
+    return notify_list
 
 
 def send_notification():
+    logger.info("[START] Sending user notifications...")
+
+    users_to_notify = process_expiry()
+    logger.info(f"[INFO] {len(users_to_notify)} user(s) to notify")
+
+    for user in users_to_notify:
+        subject = user["subject"]
+        recipient = user["email"]
+        context = {
+            "subject": subject,
+            "user": user,
+            "message": user.get("body", ""),
+            "header": user.get("header", ""),
+            "footer": user.get("footer", ""),
+        }
+
+        try:
+            html_body = render_to_string("emails/auto_user_notification.html", context)
+
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=user["body"],
+                from_email=DEFAULT_FROM_EMAIL,
+                to=[recipient],
+            )
+            email.attach_alternative(html_body, "text/html")
+            email.send()
+
+            logger.info(f"[EMAIL SENT] To: {recipient} | Stage: {user['stage']} | Days Left: {user['days_left']}")
+        except Exception as e:
+            logger.error(f"[EMAIL ERROR] Failed to send email to {recipient}: {e}")
+
+    logger.info("[COMPLETE] Finished sending user notifications")
+
+    send_admin_report(users_to_notify)
+
+
+def generate_user_table(users: list) -> str:
+    logger.info(f"[TABLE] Generating admin report table for {len(users)} user(s)")
+
+    if not users:
+        return "<p>No users were notified.</p>"
+
+    rows = []
+    for idx, user in enumerate(users, 1):
+        rows.append(f"""
+            <tr>
+                <td>{idx}</td>
+                <td>{user.get('username', '')}</td>
+                <td>{user.get('email', '')}</td>
+                <td>{user.get('days_left', '')}</td>
+                <td>{user.get('stage', '')}</td>
+                <td>{user.get('expiry_date', '')}</td>
+                <td>{user.get('sent_at', '')}</td>
+            </tr>
+        """)
+
+    logger.info(f"[TABLE DONE] Generated table with {len(rows)} rows")
+    return f"""
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Days Left</th>
+                <th>Stage</th>
+                <th>Expiry Date</th>
+                <th>Sent At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {''.join(rows)}
+        </tbody>
+    </table>
+    """
+
+
+def send_admin_report(notified_users: list):
+    logger.info("[ADMIN REPORT] Preparing admin report...")
+    now = datetime.now(timezone.utc)
+    admin_config = config.get("admin_auto_report", {})
+
+    subject = format_string(admin_config.get("subject", ""), {
+        "date": now.date().isoformat(),
+        "total_users": len(notified_users),
+    })
+
+    email_content = admin_config.get("email_content", {})
+    context = {
+        "subject": subject,
+        "notification_date": now.strftime('%d.%m.%Y %H:%M'),
+        "total_users": len(notified_users),
+        "now": now,
+        "user_table": generate_user_table(notified_users),
+        "email_content": {
+            "header": format_string(email_content.get("header", ""), {
+                "total_users": len(notified_users),
+                "date": now.date().isoformat()
+            }),
+            "body": format_string(email_content.get("body", ""), {
+                "total_users": len(notified_users)
+            }),
+            "footer": format_string(email_content.get("footer", ""), {
+                "date": now.date().isoformat()
+            }),
+        }
+    }
+
+    html = render_to_string("emails/admin_auto_report.html", context)
+    admins = get_admin_users()
+    to = [admin["email"] for admin in admins if admin.get("email")]
+
+    if not to:
+        logger.warning("[ADMIN REPORT] No admin emails found in LDAP")
+        return
+
     try:
-        manager = NotificationManager()
-        return manager.send_notifications()
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=strip_tags(html),
+            from_email=DEFAULT_FROM_EMAIL,
+            to=to,
+        )
+        email.attach_alternative(html, "text/html")
+        email.send()
+        logger.info(f"[ADMIN REPORT SENT] To: {', '.join(to)} | Users in report: {len(notified_users)}")
     except Exception as e:
-        logger.critical(f"Critical error in send_notification: {str(e)}", exc_info=True)
-        return []
+        logger.error(f"[ADMIN REPORT ERROR] Failed to send admin report: {e}")

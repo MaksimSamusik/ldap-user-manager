@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>{{ subject }}</title>
     <style>
-        /* Base Styles */
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
@@ -13,10 +12,7 @@
             background-color: #f5f7fa;
             margin: 0;
             padding: 0;
-            -webkit-font-smoothing: antialiased;
         }
-
-        /* Email Container */
         .email-container {
             max-width: 600px;
             margin: 0 auto;
@@ -25,39 +21,31 @@
             border-radius: 8px;
             overflow: hidden;
         }
-
-        /* Header */
         .header {
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             padding: 30px 20px;
             text-align: center;
             color: white;
         }
-
         .header h1 {
             margin: 0;
             font-size: 24px;
             font-weight: 600;
         }
-
-        /* Content */
         .content {
             padding: 30px;
         }
-
         .greeting {
             font-size: 18px;
             margin-bottom: 20px;
             color: #374151;
         }
-
         .message {
             font-size: 16px;
             line-height: 1.7;
             color: #4b5563;
             margin-bottom: 25px;
         }
-
         .user-info {
             background-color: #f9fafb;
             border-left: 4px solid #4f46e5;
@@ -65,41 +53,23 @@
             border-radius: 4px;
             margin-bottom: 25px;
         }
-
         .user-info p {
             margin: 5px 0;
         }
-
-        .action-button {
+        .status-indicator {
             display: inline-block;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            color: white !important;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 500;
-            margin: 15px 0;
-            text-align: center;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
         }
-
-        /* Status Indicators */
         .urgent {
-            color: #dc2626;
-            font-weight: 600;
             background-color: #fee2e2;
-            padding: 2px 6px;
-            border-radius: 4px;
+            color: #dc2626;
         }
-
         .warning {
-            color: #d97706;
-            font-weight: 600;
             background-color: #fef3c7;
-            padding: 2px 6px;
-            border-radius: 4px;
+            color: #d97706;
         }
-
-        /* Footer */
         .footer {
             padding: 20px;
             text-align: center;
@@ -107,7 +77,6 @@
             color: #9ca3af;
             border-top: 1px solid #e5e7eb;
         }
-
         .company-info {
             margin-top: 10px;
             font-size: 11px;
@@ -125,28 +94,42 @@
 
             <div class="user-info">
                 <p><strong>Account:</strong> {{ user.email }}</p>
-                {% if user.expiry_days %}
+                {% if user.expiry_days is not none %}
                 <p><strong>Status:</strong>
-                    <span class="{% if user.expiry_days <= 0 %}urgent{% else %}warning{% endif %}">
-                        {% if user.expiry_days <= 0 %}Expired{% else %}Expires in {{ user.expiry_days }} days{% endif %}
+                    <span class="status-indicator {% if user.expiry_days <= 0 %}urgent{% else %}warning{% endif %}">
+                        {% if user.expiry_days <= 0 %}
+                            Expired
+                        {% else %}
+                            Expires in {{ user.expiry_days }} day{{ user.expiry_days|pluralize }}
+                        {% endif %}
                     </span>
                 </p>
                 {% endif %}
             </div>
 
+            {% if header %}
+            <div class="message">
+                {{ header|safe }}
+            </div>
+            {% endif %}
+
+            {% if message %}
             <div class="message">
                 {{ message|safe }}
             </div>
+            {% endif %}
 
-            {% if action_url %}
-            <a href="{{ action_url }}" class="action-button">Take Action</a>
+            {% if footer %}
+            <div class="message">
+                <em>{{ footer|safe }}</em>
+            </div>
             {% endif %}
         </div>
 
         <div class="footer">
             <p>This is an automated message. Please do not reply to this email.</p>
             <p class="company-info">
-                © {{ current_year }} Your Company Name. All rights reserved.<br>
+                © {{ current_year }} Your Company Name. All rights reserved.<br />
                 123 Business St, City, Country
             </p>
         </div>
