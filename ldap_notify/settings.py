@@ -237,6 +237,6 @@ CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 минут
 CELERY_BEAT_SCHEDULE = {
     'send-daily-notification': {
         'task': 'expiry_notifier.tasks.send_daily_notification',
-        'schedule': crontab(hour=17, minute=33),
+        'schedule': crontab(hour=11, minute=30),
     },
 }
