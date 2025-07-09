@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from dateutil.parser import isoparse
 
 
 def nt_time_to_datetime(nt_time: int) -> datetime:
@@ -22,3 +23,13 @@ def format_iso_time(iso_time: str) -> str:
         return dt.strftime('%d.%m.%Y %H:%M')
     except (ValueError, AttributeError):
         return "Incorrect time format"
+
+def get_expiry_date(expires_raw):
+    if isinstance(expires_raw, str):
+        return isoparse(expires_raw)
+    elif isinstance(expires_raw, datetime):
+        return expires_raw
+    elif isinstance(expires_raw, (int, float)):
+        seconds = expires_raw / 10_000_000 - 11644473600
+        return datetime.fromtimestamp(seconds, tz=timezone.utc)
+    raise ValueError("Unsupported expiry format")

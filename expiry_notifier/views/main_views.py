@@ -1,8 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from expiry_notifier.services.user_service import get_users
-from ..services.notification_service import send_notification
-from ..utils.ldap_utils import reset_all_user_info
 from ..utils.time_util import format_iso_time
 
 
